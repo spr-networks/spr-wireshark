@@ -1,0 +1,22 @@
+version: '3.4'
+
+x-logging:
+  &default-logging
+  driver: journald
+
+services:
+  spr-wireshark:
+    container_name: spr-wireshark
+    image: ghcr.io/spr-networks/spr-wireshark:${RELEASE_VERSION:-latest}${RELEASE_CHANNEL:-}
+    build:
+      context: "${BUILDCTX:-.}"
+    logging: *default-logging
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - "${SUPERDIR}./state/plugins/spr-wireshark:/state/plugins/spr-wireshark"
+      - "${SUPERDIR}./state/public/:/state/public/:ro"
+      - "${SUPERDIR}./state/api/:/state/api/:ro"
+      - "${SUPERDIR}./configs/base/config.sh:/configs/base/config.sh:ro"
+      - "${SUPERDIR}./configs/plugins/spr-wireshark:/configs/spr-wireshark"

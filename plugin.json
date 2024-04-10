@@ -1,0 +1,11 @@
+{
+  "Name": "spr-wireshark",
+  "ComposeFilePath": "plugins/user/spr-wireshark/docker-compose.yml",
+  "UnixPath": "/state/plugins/spr-wireshark/socket",
+  "URI": "spr-wireshark",
+  "HasUI": true,
+  "SandboxedUI": false,
+  "InstallTokenPath": "/configs/plugins/spr-wireshark/api-token",
+  "ScopedPaths": [],
+  "Enabled": true
+}
