@@ -8,12 +8,12 @@ ARG TARGETARCH
 RUN curl -O https://dl.google.com/go/go1.22.1.linux-${TARGETARCH}.tar.gz
 RUN rm -rf /usr/local/go && tar -C /usr/local -xzf go1.22.1.linux-${TARGETARCH}.tar.gz
 ENV PATH="/usr/local/go/bin:$PATH"
-COPY go/ /go/
+COPY go/ /code
 
 ARG USE_TMPFS=true
 RUN --mount=type=tmpfs,target=/tmpfs \
     [ "$USE_TMPFS" = "true" ] && ln -s /tmpfs /root/go; \
-    go build -ldflags "-s -w" -o /wireshark_plugin /go/
+    go build -ldflags "-s -w" -o /wireshark_plugin /code/
 
 #FROM node:18 as builder-ui
 #WORKDIR /app
