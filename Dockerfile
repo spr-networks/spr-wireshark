@@ -8,6 +8,8 @@ ARG TARGETARCH
 RUN curl -O https://dl.google.com/go/go1.22.1.linux-${TARGETARCH}.tar.gz
 RUN rm -rf /usr/local/go && tar -C /usr/local -xzf go1.22.1.linux-${TARGETARCH}.tar.gz
 ENV PATH="/usr/local/go/bin:$PATH"
+# deps for go code
+RUN apt-get install -y --no-install-recommends libpcap-dev
 COPY go/ /code
 
 ARG USE_TMPFS=true
