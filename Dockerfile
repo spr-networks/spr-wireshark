@@ -33,6 +33,6 @@ RUN apt-get install -y --no-install-recommends tcpdump tshark
 COPY scripts /scripts/
 COPY --from=builder /wireshark_plugin /
 #COPY --from=builder-ui /app/build/ /ui/
-COPY dot11-sample.pcap /tmp/
+COPY dot11-sample.pcap /tmp/test.pcap
 ##TBD split from builder
 ENTRYPOINT ["/scripts/startup.sh"]
