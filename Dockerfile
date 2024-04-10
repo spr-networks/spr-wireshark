@@ -13,6 +13,7 @@ RUN apt-get install -y --no-install-recommends libpcap-dev
 COPY go/ /code
 
 ARG USE_TMPFS=true
+ENV CGO_ENABLED=1
 RUN --mount=type=tmpfs,target=/tmpfs \
     [ "$USE_TMPFS" = "true" ] && ln -s /tmpfs /root/go; \
     go build -ldflags "-s -w" -o /wireshark_plugin /code/
