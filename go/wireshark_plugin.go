@@ -104,12 +104,17 @@ func streamPcapInterface(w http.ResponseWriter, r *http.Request) {
 	defer handle.Close()
 
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
+	var buf bytes.Buffer
+	writer := pcapgo.NewWriter(&buf)
+	writer.WriteFileHeader(65535, layers.LinkTypeEthernet)
+	// Write the pcap file header
+	headerData := buf.Bytes()
+	fmt.Fprintf(w, "%x\r\n", len(headerData))
+	w.Write(headerData)
+	fmt.Fprint(w, "\r\n")
 
 	for packet := range packetSource.Packets() {
-		var buf bytes.Buffer
-
-		writer := pcapgo.NewWriter(&buf)
-		writer.WriteFileHeader(65535, layers.LinkTypeEthernet)
+		buf.Reset()
 		writer.WritePacket(packet.Metadata().CaptureInfo, packet.Data())
 		data := buf.Bytes()
 
