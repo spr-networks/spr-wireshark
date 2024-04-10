@@ -10,6 +10,7 @@ services:
     image: ghcr.io/spr-networks/spr-wireshark:${RELEASE_VERSION:-latest}${RELEASE_CHANNEL:-}
     build:
       context: "${BUILDCTX:-.}"
+    network: host
     logging: *default-logging
     cap_add:
       - NET_ADMIN

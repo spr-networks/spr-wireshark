@@ -9,6 +9,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/pcap"
+
 	"github.com/gorilla/mux"
 )
 
@@ -80,6 +83,42 @@ func handleChunkedTransfer(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func streamPcapInterface(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Transfer-Encoding", "chunked")
+
+	iface := mux.Vars(r)["interface"]
+	if iface == "" {
+		http.Error(w, "Missing interface", 400)
+		return
+	}
+
+	handle, err := pcap.OpenLive(iface, 65535, true, pcap.BlockForever)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+	defer handle.Close()
+
+	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
+
+	for packet := range packetSource.Packets() {
+		// Write the chunk size and data to the response
+		data := packet.Data()
+		fmt.Fprintf(w, "%x\r\n", len(data))
+		w.Write(data)
+		fmt.Fprint(w, "\r\n")
+
+		// Flush the response to send the chunk immediately
+		if flusher, ok := w.(http.Flusher); ok {
+			flusher.Flush()
+		}
+
+		// Delay before sending the next chunk
+		time.Sleep(1 * time.Second)
+	}
+}
+
 func main() {
 	//	loadConfig()
 
@@ -87,6 +126,7 @@ func main() {
 
 	unix_plugin_router.HandleFunc("/status", handleGetStatus).Methods("GET")
 	unix_plugin_router.HandleFunc("/chunktest", handleChunkedTransfer).Methods("GET")
+	unix_plugin_router.HandleFunc("/chunktest/{interface}", streamPcapInterface).Methods("GET")
 
 	// map /ui to /ui on fs
 	spa := spaHandler{staticPath: "/ui", indexPath: "index.html"}

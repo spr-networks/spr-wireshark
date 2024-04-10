@@ -3,6 +3,7 @@ import { View } from '@gluestack-ui/themed'
 import { Button } from './components/PacketDissector/Button.js'
 
 import PacketDissector from './components/PacketDissector.js'
+import { api } from './API'
 
 const downloadFile = async (url) => {
   return fetch(url).then((response) => {
@@ -25,6 +26,45 @@ const SPRWireshark = () => {
     refPacketDissector.current.process(filename, data)
   }
 
+  const loadStream = async () => {
+    const response = await api.fetch('/plugins/spr-wireshark/chunktest');
+    const reader = response.body.getReader();
+    //const decoder = new TextDecoder('utf-8');
+
+    let bigbuffer = new Uint8Array();
+    let buffer = new Uint8Array();
+    let chunk;
+
+    while (!(chunk = await reader.read()).done) {
+      buffer = new Uint8Array([...buffer, ...chunk.value]);
+
+      while (true) {
+        const newlineIndex = buffer.indexOf(13);
+
+        if (newlineIndex === -1) {
+          break;
+        }
+
+        const lengthStr = String.fromCharCode.apply(null, buffer.slice(0, newlineIndex));
+        const length = parseInt(lengthStr, 16);
+
+        const dataStartIndex = newlineIndex + 2;
+        const dataEndIndex = dataStartIndex + length;
+
+        if (buffer.length < dataEndIndex + 2) {
+          break;
+        }
+
+        const data = buffer.slice(dataStartIndex, dataEndIndex);
+        bigbuffer = new Uint8Array([...bigbuffer, ...data]);
+        refPacketDissector.current.process("chunktest.pcap", bigbuffer);
+
+        buffer = buffer.slice(dataEndIndex + 2);
+      }
+    }
+
+  }
+
   const logMessage = (msg) => {
     console.log('LOG:', msg)
   }
@@ -37,6 +77,11 @@ const SPRWireshark = () => {
       <div className="p-2">
         <Button variant="outline" onClick={loadFile}>
           Load dot11-sample.pcap
+        </Button>
+      </div>
+      <div className="p-2">
+        <Button variant="outline" onClick={loadStream}>
+          Stream dot11-sample.pcap
         </Button>
       </div>
       <div className="p-2">
