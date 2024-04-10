@@ -28,7 +28,7 @@ RUN --mount=type=tmpfs,target=/tmpfs \
 
 FROM ghcr.io/spr-networks/container_template:latest
 ENV DEBIAN_FRONTEND=noninteractive
-#RUN apt-get update
+RUN apt-get update
 RUN apt-get install -y --no-install-recommends tcpdump tshark
 COPY scripts /scripts/
 COPY --from=builder /wireshark_plugin /
