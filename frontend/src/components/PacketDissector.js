@@ -342,11 +342,7 @@ const PacketDissector = forwardRef((props, ref) => {
           Load file
         </button>*/}
 
-        <FileButton
-          className="ml-5 text-zinc-400 hover:text-zinc-200"
-          variant="text"
-          onFileSelected={loadFile}
-        >
+        <FileButton variant="outline" onFileSelected={loadFile}>
           Upload file
         </FileButton>
 

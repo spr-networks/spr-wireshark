@@ -8,7 +8,7 @@ function TabButton({ children, className }) {
       className={({ selected }) =>
         clsx(
           selected
-            ? 'bg-zinc-800 text-zinc-500 dark:text-violet-100'
+            ? 'bg-zinc-800 text-zinc-300 dark:text-violet-100'
             : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300',
           'px-3 py-2 font-medium text-sm rounded-md',
           className

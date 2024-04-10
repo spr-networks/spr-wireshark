@@ -97,12 +97,12 @@ onmessage = (event) => {
     })
   } else if (event.data.type === 'check-filter') {
     const filter = event.data.filter
-    const res = wg.lib.checkFilter(filter)
+    const res = wg.lib?.checkFilter(filter)
 
-    if (res.ok) {
+    if (res?.ok) {
       event.ports[0].postMessage({ result: true })
     } else {
-      event.ports[0].postMessage({ error: res.error })
+      event.ports[0].postMessage({ error: res?.error })
     }
   } else if (event.data.type === 'process') {
     const f = event.data.file
