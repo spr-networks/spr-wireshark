@@ -14,7 +14,12 @@ wg.init(loadWiregasm, {
     if (path.endsWith(".wasm")) return "/wiregasm/wiregasm.wasm";
     return prefix + path;  },
   }
-)
+).then(() => {
+  postMessage({ type: 'init' })
+})
+.catch((e) => {
+  postMessage({ type: 'error', error: e })
+})
 
 
 function replacer(key, value) {
@@ -30,6 +35,8 @@ onmessage = (event) => {
   } else if (event.data.type === 'select') {
     const number = event.data.number
     const res = wg.frame(number)
+    console.log("do select", number)
+    console.log(res)
     postMessage({
       type: 'selected',
       data: JSON.parse(JSON.stringify(res, replacer))
@@ -59,7 +66,8 @@ onmessage = (event) => {
     reader.addEventListener('load', (event) => {
       // XXX: this blocks the worker thread
       const res = wg.load(f.name, Buffer.from(event.target.result))
-
+      console.log("YO")
+      console.log(res)
       postMessage({ type: 'processed', name: f.name, data: res })
     })
     reader.readAsArrayBuffer(f)
@@ -67,6 +75,8 @@ onmessage = (event) => {
     const name = event.data.name
     const data = event.data.data
     const res = wg.load(name, Buffer.from(data))
+    console.log("YO2")
+    console.log(res)
     postMessage({ type: 'processed', name: name, data: res })
   }
 }
