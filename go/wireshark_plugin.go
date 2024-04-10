@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -10,7 +11,9 @@ import (
 	"time"
 
 	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
+	"github.com/google/gopacket/pcapgo"
 
 	"github.com/gorilla/mux"
 )
@@ -103,8 +106,13 @@ func streamPcapInterface(w http.ResponseWriter, r *http.Request) {
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 
 	for packet := range packetSource.Packets() {
-		// Write the chunk size and data to the response
-		data := packet.Data()
+		var buf bytes.Buffer
+
+		writer := pcapgo.NewWriter(&buf)
+		writer.WriteFileHeader(65535, layers.LinkTypeEthernet)
+		writer.WritePacket(packet.Metadata().CaptureInfo, packet.Data())
+		data := buf.Bytes()
+
 		fmt.Fprintf(w, "%x\r\n", len(data))
 		w.Write(data)
 		fmt.Fprint(w, "\r\n")
@@ -115,7 +123,7 @@ func streamPcapInterface(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Delay before sending the next chunk
-		time.Sleep(1 * time.Second)
+		//time.Sleep(1 * time.Second)
 	}
 }
 

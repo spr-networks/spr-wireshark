@@ -27,7 +27,7 @@ const SPRWireshark = () => {
   }
 
   const loadStream = async () => {
-    const response = await api.fetch('/plugins/spr-wireshark/chunktest');
+    const response = await api.fetch('/plugins/spr-wireshark/chunktest/eth0');
     const reader = response.body.getReader();
     //const decoder = new TextDecoder('utf-8');
 
@@ -37,7 +37,6 @@ const SPRWireshark = () => {
 
     while (!(chunk = await reader.read()).done) {
       buffer = new Uint8Array([...buffer, ...chunk.value]);
-
       while (true) {
         const newlineIndex = buffer.indexOf(13);
 
@@ -56,6 +55,7 @@ const SPRWireshark = () => {
         }
 
         const data = buffer.slice(dataStartIndex, dataEndIndex);
+        console.log(data)
         bigbuffer = new Uint8Array([...bigbuffer, ...data]);
         refPacketDissector.current.process("chunktest.pcap", bigbuffer);
 
