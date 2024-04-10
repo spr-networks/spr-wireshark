@@ -3,9 +3,11 @@ const InlineChunkHtmlPlugin = require('react-dev-utils/InlineChunkHtmlPlugin');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 
 
+//stream: require.resolve('stream-browserify')
+
 module.exports = {
   webpack: {
-    alias: { 'fs': false, 'child_process': false, stream: require.resolve('stream-browserify') },
+    alias: { 'fs': false, 'child_process': false},
     experiments: {
       asyncWebAssembly: true,
     },

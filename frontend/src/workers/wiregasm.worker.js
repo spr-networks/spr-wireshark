@@ -5,35 +5,17 @@ import pako from 'pako'
 const { Wiregasm, vectorToArray } = require('@goodtools/wiregasm');
 const loadWiregasm = require('@goodtools/wiregasm/dist/wiregasm');
 
+const samplePcap = require('../dot11-sample.pcap');
 
-//let wasmModuleCompressed = '/data/wiregasm.wasm.gz'
-//let wasmDataCompressed = '/data/wiregasm.data.gz'
-
-//const wg = new Wiregasm()
-const wg = await loadWiregasm({
+const wg = new Wiregasm()
+wg.init(loadWiregasm, {
   locateFile: (path, prefix) => {
     if (path.endsWith(".data")) return "/wiregasm/wiregasm.data";
     if (path.endsWith(".wasm")) return "/wiregasm/wiregasm.wasm";
     return prefix + path;  },
-})
-let sess
-
-/*wg.lib.FS = {
-  writeFile: (path, data, opts) => {
-    alert(path)
   }
+)
 
-}
-*/
-/*
-const wg = await loadWiregasm({
-  locateFile: (path, prefix) => {
-  },
-  fs: {}
-});
-*/
-
-wg.init();
 
 function replacer(key, value) {
   if (value.constructor.name.startsWith('Vector')) {
@@ -47,7 +29,7 @@ onmessage = (event) => {
     postMessage({ type: 'columns', data: wg.columns() })
   } else if (event.data.type === 'select') {
     const number = event.data.number
-    const res = sess.getFrame(number)
+    const res = wg.frame(number)
     postMessage({
       type: 'selected',
       data: JSON.parse(JSON.stringify(res, replacer))
@@ -56,7 +38,7 @@ onmessage = (event) => {
     const skip = event.data.skip
     const limit = event.data.limit
     const filter = event.data.filter
-    const res = sess.getFrames(filter, skip, limit)
+    const res = wg.frames(filter, skip, limit)
 
     // send it to the correct port
     event.ports[0].postMessage({
@@ -76,11 +58,7 @@ onmessage = (event) => {
     const reader = new FileReader()
     reader.addEventListener('load', (event) => {
       // XXX: this blocks the worker thread
-      //const res = wg.load(f.name, Buffer.from(event.target.result))
-
-      wg.FS.writeFile("/uploads/file.pcap", Buffer.from(event.target.result))
-      sess = new wg.DissectSession("/uploads/file.pcap");
-      const res = sess.load(); // res.code == 0
+      const res = wg.load(f.name, Buffer.from(event.target.result))
 
       postMessage({ type: 'processed', name: f.name, data: res })
     })
