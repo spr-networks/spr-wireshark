@@ -10,7 +10,7 @@ import 'allotment/dist/style.css'
 import PacketVirtualTable from './PacketDissector/PacketVirtualTable'
 import { Button } from './PacketDissector/Button'
 import PacketSummaryModal from './PacketDissector/PacketSummaryModal'
-import LoadFileModal from './PacketDissector/LoadFileModal'
+//import LoadFileModal from './PacketDissector/LoadFileModal'
 import { Tab } from '@headlessui/react'
 import TabButton from './PacketDissector/TabButton'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -110,6 +110,12 @@ const PacketDissector = forwardRef((props, ref) => {
   )
 
   useEffect(() => {
+    /*console.log(
+      'MSG=',
+      message?.type,
+      message?.type == 'columns' ? message : null
+    )*/
+
     if (message.type === 'init') {
       worker.postMessage({ type: 'columns' })
       setInitialized(true)
@@ -295,7 +301,6 @@ const PacketDissector = forwardRef((props, ref) => {
     //let result = await emulator.read_file(filename)
     //processData(filename, result)
     //setLoadFileOpen(!loadFileOpen)
-
   }
 
   const [files, setFiles] = useState([])
@@ -322,12 +327,12 @@ const PacketDissector = forwardRef((props, ref) => {
         summary={summary}
       />
       <div className="flex items-center w-full">
-        <LoadFileModal
+        {/*<LoadFileModal
           open={loadFileOpen}
           setOpen={setLoadFileOpen}
           files={files}
           onChange={emuLoadFile}
-          emptyMesasge={'no pcaps in /mnt'}
+          emptyMessage={'no pcaps in /mnt'}
         />
         <button
           className="text-zinc-400 hover:text-zinc-600 text-sm font-semibold antialiased"
@@ -335,10 +340,10 @@ const PacketDissector = forwardRef((props, ref) => {
           onClick={() => setLoadFileOpen(!loadFileOpen)}
         >
           Load file
-        </button>
+        </button>*/}
 
         <FileButton
-          className="ml-5 text-zinc-50 hover:text-zinc-200"
+          className="ml-5 text-zinc-400 hover:text-zinc-200"
           variant="text"
           onFileSelected={loadFile}
         >
@@ -357,7 +362,7 @@ const PacketDissector = forwardRef((props, ref) => {
         )}
         {summary != null && (
           <Button
-            className="ml-5 text-zinc-50 hover:text-zinc-200"
+            className="ml-5 text-zinc-400 hover:text-zinc-200"
             variant="text"
             onClick={() => setSummaryOpen(true)}
           >
@@ -471,5 +476,5 @@ const PacketDissector = forwardRef((props, ref) => {
 })
 
 export default PacketDissector
-PacketDissector.displayName = 'PacketDissector';
+PacketDissector.displayName = 'PacketDissector'
 export { PacketDissector, NO_SELECTION }

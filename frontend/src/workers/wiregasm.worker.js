@@ -1,26 +1,15 @@
+import { Wiregasm, vectorToArray } from '@goodtools/wiregasm'
+import loadWiregasm from '@goodtools/wiregasm/dist/wiregasm'
+//import wasmModuleCompressed from '@goodtools/wiregasm/dist/wiregasm.wasm.gz'
+//import wasmDataCompressed from '@goodtools/wiregasm/dist/wiregasm.data.gz'
 import { Buffer } from 'buffer'
 import pako from 'pako'
-
-
-const { Wiregasm, vectorToArray } = require('@goodtools/wiregasm');
-const loadWiregasm = require('@goodtools/wiregasm/dist/wiregasm');
-
-const samplePcap = require('../dot11-sample.pcap');
+let wasmModuleCompressed = '/wiregasm/wiregasm.wasm.gz'
+let wasmDataCompressed = '/wiregasm/wiregasm.data.gz'
+//let wasmModuleCompressed = '/data/wiregasm.wasm.gz'
+//let wasmDataCompressed = '/data/wiregasm.data.gz'
 
 const wg = new Wiregasm()
-wg.init(loadWiregasm, {
-  locateFile: (path, prefix) => {
-    if (path.endsWith(".data")) return "/wiregasm/wiregasm.data";
-    if (path.endsWith(".wasm")) return "/wiregasm/wiregasm.wasm";
-    return prefix + path;  },
-  }
-).then(() => {
-  postMessage({ type: 'init' })
-})
-.catch((e) => {
-  postMessage({ type: 'error', error: e })
-})
-
 
 function replacer(key, value) {
   if (value.constructor.name.startsWith('Vector')) {
@@ -29,14 +18,69 @@ function replacer(key, value) {
   return value
 }
 
+const inflateRemoteBuffer = async (url) => {
+  const res = await fetch(url)
+  const buf = await res.arrayBuffer()
+  return pako.inflate(buf)
+}
+
+const fetchPackages = async () => {
+  let [wasm, data] = await Promise.all([
+    await inflateRemoteBuffer(wasmModuleCompressed),
+    await inflateRemoteBuffer(wasmDataCompressed)
+  ])
+
+  return { wasm, data }
+}
+
+/*wg.init(loadWiregasm, {
+  locateFile: (path, prefix) => {
+    if (path.endsWith('.data')) return '/data/wiregasm.data'
+    if (path.endsWith('.wasm')) return '/data/wiregasm.wasm'
+    return prefix + path
+  },
+  handleStatus: (type, status) =>
+    postMessage({ type: 'status', code: type, status: status }),
+  handleError: (error) => postMessage({ type: 'error', error: error })
+})
+  .then(() => {
+    postMessage({ type: 'init' })
+  })
+  .catch((e) => {
+    postMessage({ type: 'error', error: e })
+  })*/
+
+fetchPackages()
+  .then(({ wasm, data }) => {
+    postMessage({ type: 'status', status: 'fetched...' })
+
+    wg.init(loadWiregasm, {
+      wasmBinary: wasm.buffer,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      getPreloadedPackage(name, size) {
+        return data.buffer
+      },
+      handleStatus: (type, status) =>
+        postMessage({ type: 'status', code: type, status: status }),
+      handleError: (error) => postMessage({ type: 'error', error: error })
+    })
+      .then(() => {
+        postMessage({ type: 'init' })
+      })
+      .catch((e) => {
+        postMessage({ type: 'error', error: e })
+      })
+  })
+  .catch((e) => {
+    postMessage({ type: 'error', error: e })
+  })
+
 onmessage = (event) => {
   if (event.data.type === 'columns') {
     postMessage({ type: 'columns', data: wg.columns() })
   } else if (event.data.type === 'select') {
     const number = event.data.number
     const res = wg.frame(number)
-    console.log("do select", number)
-    console.log(res)
     postMessage({
       type: 'selected',
       data: JSON.parse(JSON.stringify(res, replacer))
@@ -66,8 +110,6 @@ onmessage = (event) => {
     reader.addEventListener('load', (event) => {
       // XXX: this blocks the worker thread
       const res = wg.load(f.name, Buffer.from(event.target.result))
-      console.log("YO")
-      console.log(res)
       postMessage({ type: 'processed', name: f.name, data: res })
     })
     reader.readAsArrayBuffer(f)
@@ -75,8 +117,6 @@ onmessage = (event) => {
     const name = event.data.name
     const data = event.data.data
     const res = wg.load(name, Buffer.from(data))
-    console.log("YO2")
-    console.log(res)
     postMessage({ type: 'processed', name: name, data: res })
   }
 }

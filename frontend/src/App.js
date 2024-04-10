@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { GluestackUIProvider } from '@gluestack-ui/themed'
 import { config } from './gluestack-ui.config'
 import Plugin from './Plugin'
+import './globals.css'
 
 export default function App() {
   const [colorMode, setColorMode] = useState('light')

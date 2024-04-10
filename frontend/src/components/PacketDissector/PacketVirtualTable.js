@@ -6,7 +6,7 @@ import {
   useReactTable
 } from '@tanstack/react-table'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { useVirtualizer } from '@tanstack/react-virtual'
+import { useVirtual } from '@tanstack/react-virtual'
 import clsx from 'clsx'
 
 const fetchSize = 200
@@ -82,17 +82,13 @@ function PacketVirtualTable({
   })
 
   const { rows } = table.getRowModel()
-  const rowVirtualizer = useVirtualizer({
-    getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => rows.length,
+  const rowVirtualizer = useVirtual({
+    parentRef: tableContainerRef,
+    size: rows.length,
     overscan: 10
   })
 
   const { virtualItems: virtualRows, totalSize } = rowVirtualizer
-
-  if (!virtualRows) {
-    return
-  }
 
   const paddingTop = virtualRows.length > 0 ? virtualRows?.[0]?.start || 0 : 0
   const paddingBottom =
@@ -110,7 +106,7 @@ function PacketVirtualTable({
         <div className="inline-block min-w-full align-middle">
           <div className="dark:bg-zinc-800 shadow dark:shadow-zinc-900 ring-1 ring-black dark:ring-zinc-900 ring-opacity-5 md:rounded-lg">
             <table className="min-w-full divide-y divide-zinc-700">
-              <thead className="bg-zinc-800 sticky top-0">
+              <thead className="bg-zinc-800 text-zinc-400 sticky top-0">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {
