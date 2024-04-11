@@ -64,11 +64,17 @@ const getFrames = (worker, filter, skip, limit) =>
 
 const PacketDissector = forwardRef((props, ref) => {
   useImperativeHandle(ref, () => ({
-    process(filename, data) {
-      //console.log('setFile:', filename, data)
+    init() {
+      clear()
       setSummary(null)
       setSelectedFrame(1)
       setSelectedPacket(null)
+    },
+    ingest(filename, data) {
+      //console.log('setFile:', filename, data)
+      //setSummary(null)
+      //setSelectedFrame(1)
+      //setSelectedPacket(null)
       processData(filename, data)
     }
   }))
@@ -140,7 +146,9 @@ const PacketDissector = forwardRef((props, ref) => {
 
       if (response.code === 0) {
         setTotalFrames(response.summary.packet_count)
-        setSummary(response.summary)
+        if (summary === null) {
+          //setSummary(response.summary)
+        }
       }
     }
   }, [message])
@@ -164,8 +172,8 @@ const PacketDissector = forwardRef((props, ref) => {
 
   const processData = useMemo(
     () => (name, data) => {
-      clear()
-      setSummary(null)
+      //clear()
+      //setSummary(null)
       setFinishedProcessing(false)
       worker.postMessage({ type: 'process-data', name: name, data: data })
     },
@@ -398,6 +406,7 @@ const PacketDissector = forwardRef((props, ref) => {
                 filter={currentFilter}
                 fetchPackets={fetchPackets}
                 total={matchedFrames}
+                totalFrames={totalFrames}
                 selectedFrame={selectedFrame}
                 setSelectedFrame={setSelectedFrame}
               />

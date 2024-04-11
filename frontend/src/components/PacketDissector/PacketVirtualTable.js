@@ -17,6 +17,7 @@ function PacketVirtualTable({
   filter,
   fetchPackets,
   total,
+  totalFrames,
   selectedFrame,
   setSelectedFrame
 }) {
@@ -33,7 +34,7 @@ function PacketVirtualTable({
   )
 
   const { data, fetchNextPage, isFetching } = useInfiniteQuery(
-    ['packet-data', fileName, filter],
+    ['packet-data', fileName, totalFrames, filter],
     async ({ pageParam = 0 }) => {
       const start = pageParam * fetchSize
       // console.log("fetchPackets", filter, start, fetchSize);

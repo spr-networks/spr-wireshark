@@ -23,7 +23,7 @@ const SPRWireshark = () => {
   //TODO have api code (either this plugin or for spr) that index dir of .pcap's, fetch this as .json
   const loadFile = async () => {
     let data = await downloadFile(filename)
-    refPacketDissector.current.process(filename, data)
+    refPacketDissector.current.ingest(filename, data)
   }
 
   const loadStream = async () => {
@@ -36,7 +36,8 @@ const SPRWireshark = () => {
     let buffer = new Uint8Array();
     let chunk;
 
-    //refPacketDissector.current.init()
+    refPacketDissector.current.init()
+    //TBD bigbuffer needs a size limit
 
     while (!(chunk = await reader.read()).done) {
       buffer = new Uint8Array([...buffer, ...chunk.value]);
@@ -58,11 +59,8 @@ const SPRWireshark = () => {
         }
 
         const data = buffer.slice(dataStartIndex, dataEndIndex);
-        //console.log(data)
         bigbuffer = new Uint8Array([...bigbuffer, ...data]);
-        //console.log(bigbuffer.length)
-        refPacketDissector.current.process("chunktest.pcap", bigbuffer);
-        //return
+        refPacketDissector.current.ingest("chunktest.pcap", bigbuffer);
 
         buffer = buffer.slice(dataEndIndex + 2);
 
