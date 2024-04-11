@@ -27,13 +27,16 @@ const SPRWireshark = () => {
   }
 
   const loadStream = async () => {
-    const response = await api.fetch('/plugins/spr-wireshark/chunktest/spr-tailscale');
+    //const response = await api.fetch('/plugins/spr-wireshark/chunktest/spr-tailscale'); //quiet one
+    const response = await api.fetch('/plugins/spr-wireshark/chunktest/eth0');
     const reader = response.body.getReader();
     //const decoder = new TextDecoder('utf-8');
 
     let bigbuffer = new Uint8Array();
     let buffer = new Uint8Array();
     let chunk;
+
+//    refPacketDissector.current.init()
 
     while (!(chunk = await reader.read()).done) {
       buffer = new Uint8Array([...buffer, ...chunk.value]);
@@ -57,11 +60,15 @@ const SPRWireshark = () => {
         const data = buffer.slice(dataStartIndex, dataEndIndex);
         //console.log(data)
         bigbuffer = new Uint8Array([...bigbuffer, ...data]);
-        console.log(bigbuffer.length)
-        refPacketDissector.current.process("chunktest.pcap", bigbuffer);
+        //console.log(bigbuffer.length)
+        refPacketDissector.current.ingest("chunktest.pcap", bigbuffer);
         //return
 
         buffer = buffer.slice(dataEndIndex + 2);
+
+        //wait 100ms before getting a new one...
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
       }
     }
 
