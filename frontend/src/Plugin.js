@@ -36,7 +36,7 @@ const SPRWireshark = () => {
     let buffer = new Uint8Array();
     let chunk;
 
-//    refPacketDissector.current.init()
+    //refPacketDissector.current.init()
 
     while (!(chunk = await reader.read()).done) {
       buffer = new Uint8Array([...buffer, ...chunk.value]);
@@ -61,7 +61,7 @@ const SPRWireshark = () => {
         //console.log(data)
         bigbuffer = new Uint8Array([...bigbuffer, ...data]);
         //console.log(bigbuffer.length)
-        refPacketDissector.current.ingest("chunktest.pcap", bigbuffer);
+        refPacketDissector.current.process("chunktest.pcap", bigbuffer);
         //return
 
         buffer = buffer.slice(dataEndIndex + 2);
