@@ -18,24 +18,27 @@ RUN --mount=type=tmpfs,target=/tmpfs \
     [ "$USE_TMPFS" = "true" ] && ln -s /tmpfs /root/go; \
     go build -ldflags "-s -w" -o /wireshark_plugin /code/
 
-#FROM node:18 as builder-ui
-#WORKDIR /app
-#COPY frontend ./
-#ARG USE_TMPFS=true
-#RUN --mount=type=tmpfs,target=/tmpfs \
-#    [ "$USE_TMPFS" = "true" ] && \
-#        mkdir /tmpfs/cache /tmpfs/node_modules && \
-#        ln -s /tmpfs/node_modules /app/node_modules && \
-#        ln -s /tmpfs/cache /usr/local/share/.cache; \
-#    yarn install --network-timeout 86400000 && yarn run bundle
 
+# build ui
+FROM node:18 as builder-ui
+WORKDIR /app
+COPY frontend ./
+ARG USE_TMPFS=true
+RUN --mount=type=tmpfs,target=/tmpfs \
+    [ "$USE_TMPFS" = "true" ] && \
+        mkdir /tmpfs/cache /tmpfs/node_modules && \
+        ln -s /tmpfs/node_modules /app/node_modules && \
+        ln -s /tmpfs/cache /usr/local/share/.cache; \
+    yarn install --network-timeout 86400000 && yarn run bundle
+
+# link to main image
 FROM ghcr.io/spr-networks/container_template:latest
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends tcpdump tshark
 COPY scripts /scripts/
 COPY --from=builder /wireshark_plugin /
-#COPY --from=builder-ui /app/build/ /ui/
+COPY --from=builder-ui /app/build/ /ui/
 COPY dot11-sample.pcap /tmp/test.pcap
 ##TBD split from builder
 ENTRYPOINT ["/scripts/startup.sh"]
