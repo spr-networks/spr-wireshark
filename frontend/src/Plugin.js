@@ -50,14 +50,22 @@ const SPRWireshark = () => {
 
   let currentReader = null
 
+  //start with 1M
+  let bigbuffer_end = 0
+  let bigbuffer_cap = 1024*1024
+  let maxcap = 10 * 1024 * 1024 //cap at 10MB for now
+  let bigbuffer
+
   const array_concat = (views) => {
       let length = 0
-      for (const v of views)
+      for (const v of views) {
+          if (!v.byteLength) continue
           length += v.byteLength
-
+      }
       let buf = new Uint8Array(length)
       let offset = 0
       for (const v of views) {
+          if (!v.byteLength) continue
           const uint8view = new Uint8Array(v.buffer, v.byteOffset, v.byteLength)
           buf.set(uint8view, offset)
           offset += uint8view.byteLength
@@ -65,12 +73,55 @@ const SPRWireshark = () => {
       return buf
   }
 
+  const makeroom = (length) => {
+    let realloc = false
+    let old = bigbuffer
+    while (bigbuffer_end + length > bigbuffer_cap) {
+      realloc = true
+      bigbuffer_cap *= 2
+      if (bigbuffer_cap > maxcap) {
+        return -1
+      }
+    }
+
+    //copy over the old buffer
+    if (realloc) {
+      bigbuffer = new Uint8Array(bigbuffer_cap)
+      bigbuffer.set(old.subarray(0, bigbuffer_end), 0)
+    }
+    return 0
+  }
+
+  const updateBuffer = (views) => {
+      let length = 0
+      for (const v of views)
+          length += v.byteLength
+
+      if (makeroom(length) != 0) {
+        return -1
+      }
+
+      for (const v of views) {
+          const uint8view = new Uint8Array(v.buffer, v.byteOffset, v.byteLength)
+          bigbuffer.set(uint8view, bigbuffer_end)
+          bigbuffer_end += uint8view.byteLength
+      }
+      return 0
+  }
+
   const loadStream = async () => {
     if (currentReader) {
-      alert("call cancel?")
+      //alert("call cancel?")
       await currentReader.cancel();
     }
 
+    if (!refPacketDissector.current.isReady()) {
+      return
+    }
+
+    //reset big buffer
+    bigbuffer = new Uint8Array(bigbuffer_cap);
+    bigbuffer_end = 0
     refPacketDissector.current.init()
 
     let me = selectedIface
@@ -79,9 +130,10 @@ const SPRWireshark = () => {
     const reader = response.body.getReader();
     currentReader = reader;
 
-    let bigbuffer = new Uint8Array();
     let buffer = new Uint8Array();
     let chunk;
+
+    refPacketDissector.current.ingest("stream.pcap", new Uint8Array(0))
 
     //TBD bigbuffer needs a size limit
 
@@ -119,12 +171,18 @@ const SPRWireshark = () => {
         offset = dataEndIndex + 2;
       }
       buffer = buffer.slice(offset)
-      bigbuffer = array_concat([bigbuffer].concat(newPackets))
 
-      refPacketDissector.current.ingest("chunktest.pcap", bigbuffer);
-
-      if (totalPackets > 10000)
+      let ret = updateBuffer(newPackets)
+      if (ret < 0) {
+        //too much data
         break
+      }
+
+    refPacketDissector.current.ingest("stream.pcap", bigbuffer.subarray(0, bigbuffer_end));
+
+    //if (totalPackets > 1000)
+//      break
+
 
     }
     console.log("over")
