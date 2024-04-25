@@ -1,5 +1,18 @@
-import React, { useRef, useState } from 'react'
-import { View } from '@gluestack-ui/themed'
+import React, { useRef, useEffect, useState } from 'react'
+import {
+  Select,
+  SelectBackdrop,
+  SelectContent,
+  SelectDragIndicatorWrapper,
+  SelectInput,
+  Icon,
+  SelectIcon,
+  ChevronDownIcon,
+  SelectDragIndicator,
+  SelectItem,
+  SelectPortal,
+  SelectTrigger,
+  View } from '@gluestack-ui/themed'
 import { Button } from './components/PacketDissector/Button.js'
 
 import PacketDissector from './components/PacketDissector.js'
@@ -18,6 +31,15 @@ const downloadFile = async (url) => {
 const SPRWireshark = () => {
   const refPacketDissector = useRef()
   const [filename, setFilename] = useState('dot11-sample.pcap')
+  const [ifaces, setIfaces] = useState([])
+  const [selectedIface, setSelectedIface] = useState('eth0');
+
+  useEffect(() =>  {
+    api.get('/ip/addr').then((result) => {
+      let new_ifaces = result.map(x => x.ifname).filter(x => !['lo', 'sprloop'].includes(x))
+      setIfaces(new_ifaces)
+    });
+  }, [])
 
   //read file, currently fetch from /public/ in dev mode
   //TODO have api code (either this plugin or for spr) that index dir of .pcap's, fetch this as .json
@@ -26,50 +48,86 @@ const SPRWireshark = () => {
     refPacketDissector.current.ingest(filename, data)
   }
 
+  let currentReader = null
+
+  const array_concat = (views) => {
+      let length = 0
+      for (const v of views)
+          length += v.byteLength
+
+      let buf = new Uint8Array(length)
+      let offset = 0
+      for (const v of views) {
+          const uint8view = new Uint8Array(v.buffer, v.byteOffset, v.byteLength)
+          buf.set(uint8view, offset)
+          offset += uint8view.byteLength
+      }
+      return buf
+  }
+
   const loadStream = async () => {
-    //const response = await api.fetch('/plugins/spr-wireshark/chunktest/spr-tailscale'); //quiet one
-    const response = await api.fetch('/plugins/spr-wireshark/chunktest/eth0');
+    if (currentReader) {
+      alert("call cancel?")
+      await currentReader.cancel();
+    }
+
+    refPacketDissector.current.init()
+
+    let me = selectedIface
+
+    const response = await api.fetch(`/plugins/spr-wireshark/chunktest/${selectedIface}`);
     const reader = response.body.getReader();
-    //const decoder = new TextDecoder('utf-8');
+    currentReader = reader;
 
     let bigbuffer = new Uint8Array();
     let buffer = new Uint8Array();
     let chunk;
 
-    refPacketDissector.current.init()
     //TBD bigbuffer needs a size limit
 
+    console.log("stream " + me)
+
+    let totalPackets = 0
     while (!(chunk = await reader.read()).done) {
+
       buffer = new Uint8Array([...buffer, ...chunk.value]);
+
+      let offset = 0;
+
+      let newPackets = []
       while (true) {
-        const newlineIndex = buffer.indexOf(13);
+        const newlineIndex = buffer.indexOf(13, offset);
 
         if (newlineIndex === -1) {
           break;
         }
 
-        const lengthStr = String.fromCharCode.apply(null, buffer.slice(0, newlineIndex));
+        const lengthStr = String.fromCharCode.apply(null, buffer.subarray(offset, newlineIndex));
         const length = parseInt(lengthStr, 16);
 
         const dataStartIndex = newlineIndex + 2;
         const dataEndIndex = dataStartIndex + length;
 
+
         if (buffer.length < dataEndIndex + 2) {
           break;
         }
 
-        const data = buffer.slice(dataStartIndex, dataEndIndex);
-        bigbuffer = new Uint8Array([...bigbuffer, ...data]);
-        refPacketDissector.current.ingest("chunktest.pcap", bigbuffer);
-
-        buffer = buffer.slice(dataEndIndex + 2);
-
-        //wait 100ms before getting a new one...
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
+        const data = buffer.subarray(dataStartIndex, dataEndIndex);
+        newPackets.push(data)
+        totalPackets++
+        offset = dataEndIndex + 2;
       }
-    }
+      buffer = buffer.slice(offset)
+      bigbuffer = array_concat([bigbuffer].concat(newPackets))
 
+      refPacketDissector.current.ingest("chunktest.pcap", bigbuffer);
+
+      if (totalPackets > 10000)
+        break
+
+    }
+    console.log("over")
   }
 
   const logMessage = (msg) => {
@@ -87,9 +145,32 @@ const SPRWireshark = () => {
         </Button>
       </div>
       <div className="p-2">
-        <Button variant="outline" onClick={loadStream}>
-          Stream dot11-sample.pcap
-        </Button>
+
+      <Select selectedValue={selectedIface} onValueChange={(v) => {setSelectedIface(v)}} >
+        <SelectTrigger variant="outline" size="md">
+          <SelectInput placeholder="Select option" value={selectedIface}/>
+          <SelectIcon mr="$3">
+            <Icon as={ChevronDownIcon} />
+          </SelectIcon>
+        </SelectTrigger>
+        <SelectPortal>
+          <SelectBackdrop />
+          <SelectContent>
+            <SelectDragIndicatorWrapper>
+              <SelectDragIndicator />
+            </SelectDragIndicatorWrapper>
+            {ifaces.map((iface) => (
+              <SelectItem key={iface} label={iface} value={iface}>
+                {iface}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </SelectPortal>
+      </Select>
+
+      <Button variant="outline" onClick={loadStream}>
+        Stream {selectedIface}
+      </Button>
       </div>
       <div className="p-2">
         <PacketDissector ref={refPacketDissector} logMessage={logMessage} />

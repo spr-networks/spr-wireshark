@@ -63,6 +63,8 @@ const getFrames = (worker, filter, skip, limit) =>
   })
 
 const PacketDissector = forwardRef((props, ref) => {
+  const [isProcessing, setIsProcessing] = useState(false);
+
   useImperativeHandle(ref, () => ({
     init() {
       clear()
@@ -70,12 +72,20 @@ const PacketDissector = forwardRef((props, ref) => {
       setSelectedFrame(1)
       setSelectedPacket(null)
     },
-    ingest(filename, data) {
+    async ingest(filename, data) {
+
+      if (isProcessing) {
+        return;
+      }
+
       //console.log('setFile:', filename, data)
       //setSummary(null)
       //setSelectedFrame(1)
       //setSelectedPacket(null)
+      setIsProcessing(true);
       processData(filename, data)
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      setIsProcessing(false);
     }
   }))
 
