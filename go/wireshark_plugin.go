@@ -3,12 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	//"io/ioutil"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
+	//"time"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
