@@ -126,7 +126,7 @@ const SPRWireshark = () => {
 
     let me = selectedIface
 
-    const response = await api.fetch(`/plugins/spr-wireshark/chunktest/${selectedIface}`);
+    const response = await api.fetch(`/plugins/spr-wireshark/stream/${selectedIface}`);
     const reader = response.body.getReader();
     currentReader = reader;
 
@@ -180,8 +180,7 @@ const SPRWireshark = () => {
 
     refPacketDissector.current.ingest("stream.pcap", bigbuffer.subarray(0, bigbuffer_end));
 
-    //if (totalPackets > 1000)
-//      break
+    //if (totalPackets > 1500) break
 
 
     }

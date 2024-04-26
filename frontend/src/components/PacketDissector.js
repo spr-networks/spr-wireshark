@@ -7,13 +7,12 @@ import DissectionTree from './PacketDissector/DissectionTree'
 import DissectionDump from './PacketDissector/DissectionDump'
 import { Allotment } from 'allotment'
 import 'allotment/dist/style.css'
-import PacketVirtualTable from './PacketDissector/PacketVirtualTable'
+import BetterPacketVirtualTable from './PacketDissector/BetterPacketVirtualTable'
 import { Button } from './PacketDissector/Button'
 import PacketSummaryModal from './PacketDissector/PacketSummaryModal'
 //import LoadFileModal from './PacketDissector/LoadFileModal'
 import { Tab } from '@headlessui/react'
 import TabButton from './PacketDissector/TabButton'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { Tag } from './PacketDissector/Tag'
 
@@ -65,15 +64,23 @@ const getFrames = (worker, filter, skip, limit) =>
 const PacketDissector = forwardRef((props, ref) => {
   const [isProcessing, setIsProcessing] = useState(false);
 
+/*
+setSelectedFrame(1)
+setSelectedPacket(null)
+setPreparedPositions(new Map())
+setSelectedTreeEntry(NO_SELECTION)
+setSelectedDataSourceIndex(0)
+*/
+
   useImperativeHandle(ref, () => ({
     init() {
       clear()
       setSummary(null)
-      setSelectedFrame(1)
-      setSelectedPacket(null)
+    },
+    isReady() {
+      return status == 'Ready'
     },
     async ingest(filename, data) {
-
       if (isProcessing) {
         return;
       }
@@ -83,6 +90,7 @@ const PacketDissector = forwardRef((props, ref) => {
       //setSelectedFrame(1)
       //setSelectedPacket(null)
       setIsProcessing(true);
+
       processData(filename, data)
       await new Promise((resolve) => setTimeout(resolve, 500));
       setIsProcessing(false);
@@ -91,7 +99,8 @@ const PacketDissector = forwardRef((props, ref) => {
 
   const logMessage = props.logMessage
 
-  const queryClient = new QueryClient()
+  const [renderKey, setRenderKey] = useState(0);
+
   const [totalFrames, setTotalFrames] = useState(0)
   const [matchedFrames, setMatchedFrames] = useState(0)
   const [status, setStatus] = useState('LOADING...')
@@ -115,13 +124,16 @@ const PacketDissector = forwardRef((props, ref) => {
   const [worker, setWorker] = useState(null)
 
   const clear = useMemo(
-    () => () => {
+    () => (() => {
       setSelectedFrame(1)
       setSelectedPacket(null)
-      setPreparedPositions({})
+      setPreparedPositions(new Map())
       setSelectedTreeEntry(NO_SELECTION)
       setSelectedDataSourceIndex(0)
-    },
+      setTotalFrames(0)
+      setMatchedFrames(0)
+      //setFinishedProcessing(true)
+    }),
     []
   )
 
@@ -150,16 +162,23 @@ const PacketDissector = forwardRef((props, ref) => {
     } else if (message.type === 'processed') {
       // setStatus(`Error: non-zero return code (${message.code})`);
       const response = message.data
-      // console.log(response);
-      setFinishedProcessing(true)
-      setFileName(message.name)
+
+      if (fileName == '') {
+        setFileName(message.name)
+      }
 
       if (response.code === 0) {
+        setSummary(response.summary)
+        //setRenderKey(prevKey => prevKey + 1);
         setTotalFrames(response.summary.packet_count)
-        if (summary === null) {
-          //setSummary(response.summary)
-        }
+
+      } else {
+        setStatus(`Error: non-zero return code (${response.code})`);
       }
+
+      //...trigger render
+      setFinishedProcessing(true)
+
     }
   }, [message])
 
@@ -182,8 +201,6 @@ const PacketDissector = forwardRef((props, ref) => {
 
   const processData = useMemo(
     () => (name, data) => {
-      //clear()
-      //setSummary(null)
       setFinishedProcessing(false)
       worker.postMessage({ type: 'process-data', name: name, data: data })
     },
@@ -272,6 +289,7 @@ const PacketDissector = forwardRef((props, ref) => {
 
   const process = useMemo(
     () => (f) => {
+      //called when loading a file
       clear()
       setFinishedProcessing(false)
       worker.postMessage({ type: 'process', file: f })
@@ -304,16 +322,6 @@ const PacketDissector = forwardRef((props, ref) => {
     },
     [process]
   )
-
-  useEffect(() => {
-    clear()
-
-    return () => {
-      if (worker) {
-        worker.terminate()
-      }
-    }
-  }, [worker, clear])
 
   const emuLoadFile = async (filename) => {
     //let result = await emulator.read_file(filename)
@@ -408,19 +416,17 @@ const PacketDissector = forwardRef((props, ref) => {
 
       <div className="h-[70vh] mt-3">
         <Allotment vertical>
-          <Allotment.Pane minSize={200} preferredSize={200}>
-            <QueryClientProvider client={queryClient}>
-              <PacketVirtualTable
-                columns={columns}
-                fileName={fileName}
-                filter={currentFilter}
-                fetchPackets={fetchPackets}
-                total={matchedFrames}
-                totalFrames={totalFrames}
-                selectedFrame={selectedFrame}
-                setSelectedFrame={setSelectedFrame}
-              />
-            </QueryClientProvider>
+          <Allotment.Pane minSize={1} preferredSize={200}>
+            <BetterPacketVirtualTable
+              columns={columns}
+              fileName={fileName}
+              filter={currentFilter}
+              fetchPackets={fetchPackets}
+              total={matchedFrames}
+              totalFrames={totalFrames}
+              selectedFrame={selectedFrame}
+              setSelectedFrame={setSelectedFrame}
+            />
           </Allotment.Pane>
           <Allotment.Pane>
             {selectedPacket != null && (
