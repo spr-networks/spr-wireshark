@@ -59,33 +59,6 @@ func logRequest(handler http.Handler) http.Handler {
 	})
 }
 
-func handleChunkedTransfer(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Transfer-Encoding", "chunked")
-
-	// Generate or retrieve new data
-	data, err := ioutil.ReadFile("/tmp/test.pcap")
-	if err != nil {
-		data = []byte("New data chunk")
-	} else {
-	}
-
-	for {
-		// Write the chunk size and data to the response
-		fmt.Fprintf(w, "%x\r\n", len(data))
-		w.Write(data)
-		fmt.Fprint(w, "\r\n")
-
-		// Flush the response to send the chunk immediately
-		if flusher, ok := w.(http.Flusher); ok {
-			flusher.Flush()
-		}
-
-		// Delay before sending the next chunk
-		time.Sleep(1 * time.Second)
-	}
-}
-
 func streamPcapInterface(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Transfer-Encoding", "chunked")
@@ -126,9 +99,6 @@ func streamPcapInterface(w http.ResponseWriter, r *http.Request) {
 		if flusher, ok := w.(http.Flusher); ok {
 			flusher.Flush()
 		}
-
-		// Delay before sending the next chunk
-		//time.Sleep(1 * time.Second)
 	}
 }
 
@@ -138,8 +108,7 @@ func main() {
 	unix_plugin_router := mux.NewRouter().StrictSlash(true)
 
 	unix_plugin_router.HandleFunc("/status", handleGetStatus).Methods("GET")
-	unix_plugin_router.HandleFunc("/chunktest", handleChunkedTransfer).Methods("GET")
-	unix_plugin_router.HandleFunc("/chunktest/{interface}", streamPcapInterface).Methods("GET")
+	unix_plugin_router.HandleFunc("/stream/{interface}", streamPcapInterface).Methods("GET")
 
 	// map /ui to /ui on fs
 	spa := spaHandler{staticPath: "/ui", indexPath: "index.html"}
