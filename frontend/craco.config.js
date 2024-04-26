@@ -27,6 +27,7 @@ module.exports = {
 
       })
 
+      /*
       const oneOfRuleIdx = webpackConfig.module.rules.findIndex(rule => !!rule.oneOf);
       webpackConfig.module.rules[oneOfRuleIdx].oneOf.forEach(loader => {
         if (loader.test && loader.test.test && (loader.test.test("test.module.css") || loader.test.test("test.module.scss"))) {
@@ -37,6 +38,7 @@ module.exports = {
           })
         }
       })
+      */
 
       return webpackConfig
     }
