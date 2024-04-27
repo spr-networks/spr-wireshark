@@ -224,11 +224,6 @@ const SPRWireshark = () => {
         SPR+Wireshark
       </div>
       <div className="p-2">
-        <Button variant="outline" onClick={loadFile}>
-          Load dot11-sample.pcap
-        </Button>
-      </div>
-      <div className="p-2">
 
       <Select selectedValue={selectedIface} onValueChange={(v) => {setSelectedIface(v)}} >
         <SelectTrigger variant="outline" size="md">

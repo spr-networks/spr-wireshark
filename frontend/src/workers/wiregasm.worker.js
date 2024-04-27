@@ -22,14 +22,16 @@ const inflateRemoteBuffer = async (url) => {
 }
 */
 const inflateBuffer = async (buffer) => {
-  console.log("infl buffer")
   const compressedData = buffer.split(',')[1]; // Strip out the base64 header
   const binaryString = atob(compressedData); // Base64 decode
-  const binaryData = new Uint8Array(binaryString) //binaryString.length).map((_, i) => binaryString.charCodeAt(i));
+  const binaryData = new Uint8Array(binaryString.length).map((_, i) => binaryString.charCodeAt(i));
   return pako.inflate(binaryData);
 };
 
 const fetchPackages = async () => {
+  if (!wasmModuleCompressed) {
+    return
+  }
   let [wasm, data] = await Promise.all([
     inflateBuffer(wasmModuleCompressed),
     inflateBuffer(wasmDataCompressed),
