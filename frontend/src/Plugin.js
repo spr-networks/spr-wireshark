@@ -31,12 +31,39 @@ const downloadFile = async (url) => {
 const SPRWireshark = () => {
   const refPacketDissector = useRef()
   const [filename, setFilename] = useState('dot11-sample.pcap')
+  const [labels, setLabels] = useState({})
   const [ifaces, setIfaces] = useState([])
   const [selectedIface, setSelectedIface] = useState('eth0');
+
+  const getLabel = (iface) => {
+    if (labels[iface]) return labels[iface]
+    return iface
+  }
 
   useEffect(() =>  {
     api.get('/ip/addr').then((result) => {
       let new_ifaces = result.map(x => x.ifname).filter(x => !['lo', 'sprloop'].includes(x))
+
+      //we have an opportunity here to also populate device names. lets try
+      for (let iface of new_ifaces) {
+        if (iface.startsWith("wlan")) {
+          api.get(`/hostapd/${iface}/all_stations`).then((result) => {
+
+            setLabels((prevLabels) => {
+              let newLabels = prevLabels
+              for (let entry in result) {
+                if (result[entry].vlan_id) {
+                  //set the MAC address of the client for now
+                  newLabels[iface + "." + result[entry].vlan_id] = entry
+                }
+              }
+              return newLabels
+            })
+          }).catch((e) => {
+          })
+        }
+      }
+
       setIfaces(new_ifaces)
     });
   }, [])
@@ -217,7 +244,7 @@ const SPRWireshark = () => {
               <SelectDragIndicator />
             </SelectDragIndicatorWrapper>
             {ifaces.map((iface) => (
-              <SelectItem key={iface} label={iface} value={iface}>
+              <SelectItem key={iface} label={getLabel(iface)} value={iface}>
                 {iface}
               </SelectItem>
             ))}

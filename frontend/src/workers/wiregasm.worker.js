@@ -1,13 +1,10 @@
 import { Wiregasm, vectorToArray } from '@goodtools/wiregasm'
 import loadWiregasm from '@goodtools/wiregasm/dist/wiregasm'
-//import wasmModuleCompressed from '@goodtools/wiregasm/dist/wiregasm.wasm.gz'
-//import wasmDataCompressed from '@goodtools/wiregasm/dist/wiregasm.data.gz'
+import wasmModuleCompressed from './wiregasm/wiregasm.wasm.gz';
+import wasmDataCompressed from './wiregasm/wiregasm.data.gz';
 import { Buffer } from 'buffer'
 import pako from 'pako'
-let wasmModuleCompressed = '/wiregasm/wiregasm.wasm.gz'
-let wasmDataCompressed = '/wiregasm/wiregasm.data.gz'
-//let wasmModuleCompressed = '/data/wiregasm.wasm.gz'
-//let wasmDataCompressed = '/data/wiregasm.data.gz'
+
 
 const wg = new Wiregasm()
 
@@ -17,38 +14,28 @@ function replacer(key, value) {
   }
   return value
 }
-
+/*
 const inflateRemoteBuffer = async (url) => {
   const res = await fetch(url)
   const buf = await res.arrayBuffer()
   return pako.inflate(buf)
 }
+*/
+const inflateBuffer = async (buffer) => {
+  console.log("infl buffer")
+  const compressedData = buffer.split(',')[1]; // Strip out the base64 header
+  const binaryString = atob(compressedData); // Base64 decode
+  const binaryData = new Uint8Array(binaryString) //binaryString.length).map((_, i) => binaryString.charCodeAt(i));
+  return pako.inflate(binaryData);
+};
 
 const fetchPackages = async () => {
   let [wasm, data] = await Promise.all([
-    await inflateRemoteBuffer(wasmModuleCompressed),
-    await inflateRemoteBuffer(wasmDataCompressed)
-  ])
-
-  return { wasm, data }
-}
-
-/*wg.init(loadWiregasm, {
-  locateFile: (path, prefix) => {
-    if (path.endsWith('.data')) return '/data/wiregasm.data'
-    if (path.endsWith('.wasm')) return '/data/wiregasm.wasm'
-    return prefix + path
-  },
-  handleStatus: (type, status) =>
-    postMessage({ type: 'status', code: type, status: status }),
-  handleError: (error) => postMessage({ type: 'error', error: error })
-})
-  .then(() => {
-    postMessage({ type: 'init' })
-  })
-  .catch((e) => {
-    postMessage({ type: 'error', error: e })
-  })*/
+    inflateBuffer(wasmModuleCompressed),
+    inflateBuffer(wasmDataCompressed),
+  ]);
+  return { wasm, data };
+};
 
 fetchPackages()
   .then(({ wasm, data }) => {

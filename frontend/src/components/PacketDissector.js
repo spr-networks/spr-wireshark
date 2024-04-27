@@ -15,6 +15,7 @@ import { Tab } from '@headlessui/react'
 import TabButton from './PacketDissector/TabButton'
 import clsx from 'clsx'
 import { Tag } from './PacketDissector/Tag'
+import Worker from '../workers/wiregasm.worker.js';
 
 const NO_SELECTION = { id: '', idx: 0, start: 0, length: 0 }
 

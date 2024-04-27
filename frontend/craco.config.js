@@ -16,7 +16,12 @@ module.exports = {
 
       webpackConfig.module.rules.push({
         test: /\.gz$/,
-        use: 'raw-loader'
+        type: 'asset/inline'
+      });
+
+      webpackConfig.module.rules.push({
+        test: /\.worker\.js$/,
+        use: { loader: 'worker-loader', options: { inline: 'no-fallback' }, }
       })
 
       webpackConfig.plugins.forEach(plugin => {
