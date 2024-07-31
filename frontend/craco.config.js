@@ -24,6 +24,7 @@ module.exports = {
         use: { loader: 'worker-loader', options: { inline: 'no-fallback' }, }
       })
 
+/*
       webpackConfig.plugins.forEach(plugin => {
         if (plugin instanceof InlineChunkHtmlPlugin) {
           plugin.tests =  [ /.+[.]js/ ]
@@ -31,6 +32,7 @@ module.exports = {
         }
 
       })
+*/
 
       /*
       const oneOfRuleIdx = webpackConfig.module.rules.findIndex(rule => !!rule.oneOf);

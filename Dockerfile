@@ -29,7 +29,7 @@ RUN --mount=type=tmpfs,target=/tmpfs \
         mkdir /tmpfs/cache /tmpfs/node_modules && \
         ln -s /tmpfs/node_modules /app/node_modules && \
         ln -s /tmpfs/cache /usr/local/share/.cache; \
-    yarn install --network-timeout 86400000 && yarn run bundle
+    yarn install --network-timeout 86400000 && yarn run build
 
 # link to main image
 FROM ghcr.io/spr-networks/container_template:latest
