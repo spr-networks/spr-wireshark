@@ -223,7 +223,7 @@ const SPRWireshark = () => {
       <div className="bg-slate-800 p-4 text-slate-50 font-mono">
         SPR+Wireshark
       </div>
-      <div className="p-2">
+      <div className="p-2 flex gap-4 items-center">
 
       <Select selectedValue={selectedIface} onValueChange={(v) => {setSelectedIface(v)}} >
         <SelectTrigger variant="outline" size="md">
