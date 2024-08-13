@@ -2,15 +2,18 @@
 
 ## About 
 
-spr + wireshark
+wireshark plugin for SPR by [www.supernetworks.org](https://www.supernetworks.org)
 
 ## Overview
 
-- This plugin employs https://github.com/good-tools/wiregasm to render and run wireshark in wasm in the browser.
+Observe traffic from any interface on the SPR with wireshark, rendered in the browser
+
+## Technical Details
+
+- This plugin employs [wiregasm](https://github.com/good-tools/wiregasm) to render and run wireshark in wasm in the browser.
 - The [backend](https://github.com/spr-networks/spr-wireshark/blob/main/go/wireshark_plugin.go) has minimal attack surface and streams packets to the frontend 
 
 
-## Technical Details
 
 ### UI Setup
 
