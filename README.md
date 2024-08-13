@@ -33,4 +33,4 @@ Run the install script
 
 ### Usage
 
-todo screenshot and api usage
+![image](https://github.com/user-attachments/assets/26a7ab56-aa5d-4f00-9f7f-177d430d0d41)
