@@ -4,9 +4,10 @@
 
 spr + wireshark
 
-todo screenshot + image
-
 ## Overview
+
+- This plugin employs https://github.com/good-tools/wiregasm to render and run wireshark in wasm in the browser.
+- The [backend](https://github.com/spr-networks/spr-wireshark/blob/main/go/wireshark_plugin.go) has minimal attack surface and streams packets to the frontend 
 
 
 ## Technical Details
