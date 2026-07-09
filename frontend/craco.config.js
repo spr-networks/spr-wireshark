@@ -1,53 +1,71 @@
-const webpack = require('webpack');
-const InlineChunkHtmlPlugin = require('react-dev-utils/InlineChunkHtmlPlugin');
-var HtmlWebpackPlugin = require('html-webpack-plugin');
-
-
-//stream: require.resolve('stream-browserify')
+const InlineChunkHtmlPlugin = require('react-dev-utils/InlineChunkHtmlPlugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 module.exports = {
   webpack: {
-    alias: { 'fs': false, 'child_process': false},
+    alias: { fs: false, child_process: false },
     experiments: {
-      asyncWebAssembly: true,
+      asyncWebAssembly: true
     },
 
-    configure: (webpackConfig, { env, paths }) => {
-
+    configure: (webpackConfig) => {
       webpackConfig.module.rules.push({
         test: /\.gz$/,
         type: 'asset/inline'
-      });
+      })
 
       webpackConfig.module.rules.push({
         test: /\.worker\.js$/,
-        use: { loader: 'worker-loader', options: { inline: 'no-fallback' }, }
-      })
-
-/*
-      webpackConfig.plugins.forEach(plugin => {
-        if (plugin instanceof InlineChunkHtmlPlugin) {
-          plugin.tests =  [ /.+[.]js/ ]
-          plugin.options =  { inject: 'body'}
+        use: {
+          loader: 'worker-loader',
+          options: { inline: 'no-fallback' }
         }
-
       })
-*/
 
-      /*
-      const oneOfRuleIdx = webpackConfig.module.rules.findIndex(rule => !!rule.oneOf);
-      webpackConfig.module.rules[oneOfRuleIdx].oneOf.forEach(loader => {
-        if (loader.test && loader.test.test && (loader.test.test("test.module.css") || loader.test.test("test.module.scss"))) {
-          loader.use.forEach(use => {
-            if (use.loader && use.loader.includes('mini-css-extract-plugin')) {
-              use.loader = require.resolve('style-loader');
+      // SPR renders plugin HTML with iframe srcdoc. Keep every executable and
+      // stylesheet byte in index.html so the browser never has to resolve
+      // plugin assets against the parent application's origin.
+      let inlineChunkPluginFound = false
+      webpackConfig.plugins.forEach((plugin) => {
+        if (plugin instanceof InlineChunkHtmlPlugin) {
+          plugin.tests = [/.+[.]js/]
+          inlineChunkPluginFound = true
+        }
+        if (plugin instanceof HtmlWebpackPlugin) {
+          plugin.userOptions.inject = 'body'
+          plugin.userOptions.scriptLoading = 'blocking'
+          plugin.options.inject = 'body'
+          plugin.options.scriptLoading = 'blocking'
+        }
+      })
+      if (!inlineChunkPluginFound) {
+        throw new Error('InlineChunkHtmlPlugin not found')
+      }
+
+      const oneOfRule = webpackConfig.module.rules.find(
+        (rule) => Array.isArray(rule.oneOf)
+      )
+      if (!oneOfRule) {
+        throw new Error('webpack oneOf rules not found')
+      }
+      oneOfRule.oneOf.forEach((loader) => {
+        if (
+          loader.test?.test?.('test.module.css') ||
+          loader.test?.test?.('test.module.scss')
+        ) {
+          loader.use?.forEach((entry) => {
+            if (
+              entry.loader &&
+              entry.loader.includes('mini-css-extract-plugin')
+            ) {
+              entry.loader = require.resolve('style-loader')
+              entry.options = {}
             }
           })
         }
       })
-      */
 
       return webpackConfig
     }
-  },
+  }
 }

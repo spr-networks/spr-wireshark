@@ -15,7 +15,7 @@ import { Tab } from '@headlessui/react'
 import TabButton from './PacketDissector/TabButton'
 import clsx from 'clsx'
 import { Tag } from './PacketDissector/Tag'
-import Worker from '../workers/wiregasm.worker.js';
+import WiregasmWorker from '../workers/wiregasm.worker.js';
 
 const NO_SELECTION = { id: '', idx: 0, start: 0, length: 0 }
 
@@ -184,9 +184,7 @@ setSelectedDataSourceIndex(0)
   }, [message])
 
   useEffect(() => {
-    let _worker = new Worker(
-      new URL('../workers/wiregasm.worker.js', import.meta.url)
-    )
+    let _worker = new WiregasmWorker()
     setWorker(_worker)
   }, [])
 
