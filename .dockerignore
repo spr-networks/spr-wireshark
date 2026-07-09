@@ -1,0 +1,7 @@
+# Keep the build context deterministic and small. Host-installed deps and build
+# outputs must never leak into the image.
+.git
+**/node_modules
+frontend/build
+**/*.log
+.DS_Store
