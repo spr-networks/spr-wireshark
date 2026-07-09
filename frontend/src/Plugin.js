@@ -32,25 +32,59 @@ const SPRWireshark = () => {
   const refPacketDissector = useRef()
   const [filename, setFilename] = useState('dot11-sample.pcap')
   const [labels, setLabels] = useState({})
+  const [devices, setDevices] = useState({})
   const [ifaces, setIfaces] = useState([])
   const [selectedIface, setSelectedIface] = useState('eth0');
 
+  const findDeviceByMAC = (mac) => {
+    if (!mac) return null
+    let want = mac.toLowerCase()
+    if (devices[want]) return devices[want]
+    return (
+      Object.values(devices).find((d) => d.MAC?.toLowerCase() === want) || null
+    )
+  }
+
+  const deviceInfo = (dev, fallback) => {
+    let info = [dev?.Name, dev?.RecentIP].filter((x) => x?.length).join(' ')
+    return info.length ? info : dev?.MAC || fallback
+  }
+
   const getLabel = (iface) => {
-    if (labels[iface]) return labels[iface]
+    // wireless vlan iface: hostapd stations gave us the MAC for wlanX.<vlan>
+    let mac = labels[iface]
+    if (mac) {
+      return `${iface} (${deviceInfo(findDeviceByMAC(mac), mac)})`
+    }
+
+    // wired vlan iface: ethX.<tag> is created from the device VLANTag
+    if (iface.includes('.')) {
+      let tag = iface.split('.').pop()
+      let dev = Object.values(devices).find((d) => d.VLANTag === tag)
+      if (dev) {
+        return `${iface} (${deviceInfo(dev, tag)})`
+      }
+    }
+
     return iface
   }
 
   useEffect(() =>  {
+    api.get('/devices').then((result) => {
+      setDevices(result || {})
+    }).catch((e) => {})
+
     api.get('/ip/addr').then((result) => {
       let new_ifaces = result.map(x => x.ifname).filter(x => !['lo', 'sprloop'].includes(x))
 
       //we have an opportunity here to also populate device names. lets try
       for (let iface of new_ifaces) {
-        if (iface.startsWith("wlan")) {
+        // hostapd only runs on parent interfaces, skip vlan sub-interfaces
+        if (iface.startsWith("wlan") && !iface.includes(".")) {
           api.get(`/hostapd/${iface}/all_stations`).then((result) => {
 
             setLabels((prevLabels) => {
-              let newLabels = prevLabels
+              let newLabels = { ...prevLabels }
               for (let entry in result) {
                 if (result[entry].vlan_id) {
                   //set the MAC address of the client for now
@@ -227,7 +261,7 @@ const SPRWireshark = () => {
 
       <Select selectedValue={selectedIface} onValueChange={(v) => {setSelectedIface(v)}} >
         <SelectTrigger variant="outline" size="md">
-          <SelectInput placeholder="Select option" value={selectedIface}/>
+          <SelectInput placeholder="Select option" value={getLabel(selectedIface)}/>
           <SelectIcon mr="$3">
             <Icon as={ChevronDownIcon} />
           </SelectIcon>
