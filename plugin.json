@@ -2,6 +2,7 @@
   "Name": "spr-wireshark",
   "ComposeFilePath": "plugins/user/spr-wireshark/docker-compose.yml",
   "UnixPath": "/state/plugins/spr-wireshark/socket",
+  "Icon": "Fish",
   "URI": "spr-wireshark",
   "HasUI": true,
   "SandboxedUI": false,
