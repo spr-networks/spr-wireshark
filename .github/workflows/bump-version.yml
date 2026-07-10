@@ -6,15 +6,19 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         fetch-depth: '0'
     - name: Bump version and push tag
-      uses: anothrNick/github-tag-action@v1
+      # SHA-pinned (tag 1.40.0) because this action can push release tags.
+      uses: anothrNick/github-tag-action@38e273cbdda80759cc0232a36f559999f4e47d29
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         WITH_V: true
-        INITIAL_VERSION: 0.1.0
+        INITIAL_VERSION: 0.0.0
         DEFAULT_BUMP: none
+        BRANCH_HISTORY: last
