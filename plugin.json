@@ -6,7 +6,5 @@
   "URI": "spr-wireshark",
   "HasUI": true,
   "SandboxedUI": false,
-  "InstallTokenPath": "/configs/plugins/spr-wireshark/api-token",
-  "ScopedPaths": [],
   "Enabled": true
 }
