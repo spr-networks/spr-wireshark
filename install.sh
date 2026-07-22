@@ -9,7 +9,7 @@ fi
 
 export SUPERDIR
 
-docker compose -f docker-compose-krun.yml build
-docker compose -f docker-compose-krun.yml up -d
+docker compose build
+docker compose up -d
 
-docker compose -f docker-compose-krun.yml restart
+docker compose restart
