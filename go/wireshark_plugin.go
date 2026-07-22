@@ -18,7 +18,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var UNIX_PLUGIN_LISTENER = "/run/spr-krun-plugin/spr-wireshark.sock"
+var UNIX_PLUGIN_LISTENER = "/state/plugins/spr-wireshark/socket"
 
 func httpInternalError(msg string, err error, w http.ResponseWriter) {
 	fmt.Println(msg, err)
