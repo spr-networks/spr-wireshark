@@ -6,8 +6,6 @@
   "URI": "spr-wireshark",
   "HasUI": true,
   "SandboxedUI": false,
-  "InstallTokenPath": "/configs/plugins/spr-wireshark/api-token",
-  "ScopedPaths": [],
   "NetworkCapabilities": {
     "Interface": "kwireshark0",
     "DeviceMAC": "02:53:50:52:4b:14",
