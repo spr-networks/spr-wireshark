@@ -1,10 +1,16 @@
 {
   "Name": "spr-wireshark",
-  "ComposeFilePath": "plugins/user/spr-wireshark/docker-compose.yml",
+  "ComposeFilePath": "plugins/user/spr-wireshark/docker-compose-krun.yml",
   "UnixPath": "/state/plugins/spr-wireshark/socket",
   "Icon": "Eye",
   "URI": "spr-wireshark",
   "HasUI": true,
-  "SandboxedUI": false,
+  "SandboxedUI": true,
+  "NetworkCapabilities": {
+    "Interface": "kwireshark0",
+    "DeviceMAC": "02:53:50:52:4b:14",
+    "Policies": [],
+    "Groups": []
+  },
   "Enabled": true
 }
