@@ -7,7 +7,7 @@ x-logging:
 services:
   spr-wireshark:
     container_name: spr-wireshark
-    image: ghcr.io/spr-networks/spr-wireshark:${RELEASE_VERSION:-latest}${RELEASE_CHANNEL:-}
+    image: ghcr.io/spr-networks/spr-wireshark:latest
     build:
       context: "${BUILDCTX:-.}"
     network_mode: host
